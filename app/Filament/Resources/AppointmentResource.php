@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\AppointmentStatus;
 use App\Filament\Resources\AppointmentResource\Pages;
 use App\Models\Appointment;
 use Filament\Forms;
@@ -43,6 +44,10 @@ class AppointmentResource extends Resource
                     Forms\Components\TextInput::make('description')
                         ->required()
                         ->maxLength(255),
+                    Forms\Components\Select::make('status')
+                        ->native(false)
+                        ->options(AppointmentStatus::class)
+                        ->visibleOn(Pages\EditAppointment::class),
                 ]),
             ]);
     }
@@ -51,15 +56,22 @@ class AppointmentResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('pet.name')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('date')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start'),
-                Tables\Columns\TextColumn::make('end'),
-                Tables\Columns\TextColumn::make('description')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('pet.name')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('start')
+                    ->label('From')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('end')
+                    ->label('To')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -74,6 +86,23 @@ class AppointmentResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('Confirm')
+                    ->action(function (Appointment $record) {
+                        $record->status = AppointmentStatus::Confirmed;
+                        $record->save();
+                    })
+                    ->visible(fn (Appointment $record) => $record->status === AppointmentStatus::Created)
+                    ->color('success')
+                    ->icon('heroicon-o-check'),
+                Tables\Actions\Action::make('Cancel')
+                    ->action(function (Appointment $record) {
+                        $record->status = AppointmentStatus::Canceled;
+                        $record->save();
+                    })
+                    ->visible(fn (Appointment $record) => $record->status !== AppointmentStatus::Canceled)
+
+                    ->color('danger')
+                    ->icon('heroicon-o-x-mark'),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
