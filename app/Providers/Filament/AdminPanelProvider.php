@@ -27,8 +27,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->registration()
+            ->passwordReset()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Emerald,
             ])
             ->favicon('https://fav.farm/🚀 ')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
