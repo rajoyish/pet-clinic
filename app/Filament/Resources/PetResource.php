@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 
 class PetResource extends Resource
 {
@@ -90,6 +91,10 @@ class PetResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Pet $record) {
+                        Storage::delete('public/'.$record->avatar);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
