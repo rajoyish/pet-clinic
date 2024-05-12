@@ -72,4 +72,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     {
         return $this->clinics->contains($tenant);
     }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
 }
