@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Tenancy\EditClinicProfile;
 use App\Filament\Pages\Tenancy\RegisterClinic;
 use App\Models\Clinic;
 use Filament\Http\Middleware\Authenticate;
@@ -33,6 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->passwordReset()
             ->tenant(Clinic::class)
             ->tenantRegistration(RegisterClinic::class)
+            ->tenantProfile(EditClinicProfile::class)
             ->colors([
                 'primary' => Color::Emerald,
             ])
