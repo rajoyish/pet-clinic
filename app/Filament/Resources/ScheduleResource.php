@@ -3,7 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ScheduleResource\Pages;
+use App\Models\Role;
 use App\Models\Schedule;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -18,13 +20,30 @@ class ScheduleResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $docterRole = Role::whereName('doctor')->first();
+
         return $form
             ->schema([
-                Forms\Components\DatePicker::make('date')
-                    ->required(),
-                Forms\Components\Select::make('owner_id')
-                    ->relationship('owner', 'name')
-                    ->required(),
+
+                Forms\Components\Section::make([
+                    Forms\Components\DatePicker::make('date')
+                        ->native(false)
+                        ->required(),
+                    Forms\Components\Select::make('owner_id')
+                        // ->relationship('owner', 'name')
+                        ->options(
+                            Filament::getTenant()
+                                ->users()
+                                ->whereBelongsTo($docterRole)
+                                ->get()
+                                ->pluck('name', 'id')
+                        )
+                        ->native(false)
+                        ->preload()
+                        ->searchable()
+                        ->required(),
+                ]),
+
             ]);
     }
 
