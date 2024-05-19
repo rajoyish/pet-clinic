@@ -16,4 +16,9 @@ class ClinicPolicy
     {
         return auth()->user()->role->name == 'admin';
     }
+
+    public function update(): bool
+    {
+        return auth()->user()->role->name == 'admin';
+    }
 }
