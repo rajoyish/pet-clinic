@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ScheduleResource\Pages;
 use App\Models\Role;
 use App\Models\Schedule;
+use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -20,7 +21,7 @@ class ScheduleResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $docterRole = Role::whereName('doctor')->first();
+        $doctorRole = Role::whereName('doctor')->first();
 
         return $form
             ->schema([
@@ -34,7 +35,7 @@ class ScheduleResource extends Resource
                         ->options(
                             Filament::getTenant()
                                 ->users()
-                                ->whereBelongsTo($docterRole)
+                                ->whereBelongsTo($doctorRole)
                                 ->get()
                                 ->pluck('name', 'id')
                         )
@@ -42,6 +43,16 @@ class ScheduleResource extends Resource
                         ->preload()
                         ->searchable()
                         ->required(),
+                    Forms\Components\Repeater::make('slots')
+                        ->relationship()
+                        ->schema([
+                            Forms\Components\TimePicker::make('start')
+                                ->seconds(false)
+                                ->required(),
+                            Forms\Components\TimePicker::make('end')
+                                ->seconds(false)
+                                ->required(),
+                        ]),
                 ]),
 
             ]);
@@ -50,13 +61,22 @@ class ScheduleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->groups([
+                Tables\Grouping\Group::make('date')
+                    ->collapsible(),
+            ])
+            ->defaultGroup('date')
             ->columns([
                 Tables\Columns\TextColumn::make('date')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('owner.name')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('slots.start')
+                    ->formatStateUsing(fn (Carbon $state) => $state->format('h:i A'))
+                    ->badge(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -71,6 +91,8 @@ class ScheduleResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(fn (Schedule $record) => $record->slots()->delete()),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
