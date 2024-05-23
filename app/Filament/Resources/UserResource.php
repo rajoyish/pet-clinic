@@ -39,12 +39,6 @@ class UserResource extends Resource
                             ->preload()
                             ->searchable()
                             ->required(),
-                        Forms\Components\Select::make('clinics')
-                            ->relationship(name: null, titleAttribute: 'name')
-                            ->native(false)
-                            ->multiple()
-                            ->preload()
-                            ->required(),
                         Forms\Components\TextInput::make('password')
                             ->password()
                             ->dehydrateStateUsing(fn ($state) => Hash::make($state))
@@ -69,10 +63,6 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('role.name')
-                    ->badge()
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('clinics.name')
                     ->badge()
                     ->searchable()
                     ->sortable(),

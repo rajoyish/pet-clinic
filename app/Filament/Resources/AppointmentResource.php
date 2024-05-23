@@ -7,7 +7,7 @@ use App\Filament\Resources\AppointmentResource\Pages;
 use App\Models\Appointment;
 use App\Models\Role;
 use App\Models\Slot;
-use Filament\Facades\Filament;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -38,12 +38,11 @@ class AppointmentResource extends Resource
                     Forms\Components\DatePicker::make('date')
                         ->native(false)
                         ->live()
-                        ->required(),
-                    Forms\Components\Select::make('doctor_id')
+                        ->required()
+                        ->closeOnDateSelection(),
+                    Forms\Components\Select::make('doctor')
                         ->options(function (Get $get) use ($doctorRole) {
-                            return Filament::getTenant()
-                                ->users()
-                                ->whereBelongsTo($doctorRole)
+                            return User::whereBelongsTo($doctorRole)
                                 ->whereHas('schedules', function (Builder $query) use ($get) {
                                     $query->where('date', $get('date'));
                                 })

@@ -5,8 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ScheduleResource\Pages;
 use App\Models\Role;
 use App\Models\Schedule;
+use App\Models\User;
 use Carbon\Carbon;
-use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -29,19 +29,18 @@ class ScheduleResource extends Resource
                 Forms\Components\Section::make([
                     Forms\Components\DatePicker::make('date')
                         ->native(false)
-                        ->required(),
+                        ->required()
+                        ->closeOnDateSelection(),
                     Forms\Components\Select::make('owner_id')
-                        // ->relationship('owner', 'name')
                         ->options(
-                            Filament::getTenant()
-                                ->users()
-                                ->whereBelongsTo($doctorRole)
+                            User::whereBelongsTo($doctorRole)
                                 ->get()
                                 ->pluck('name', 'id')
                         )
                         ->native(false)
                         ->preload()
                         ->searchable()
+                        ->label('Doctor')
                         ->required(),
                     Forms\Components\Repeater::make('slots')
                         ->relationship()
@@ -63,12 +62,13 @@ class ScheduleResource extends Resource
         return $table
             ->groups([
                 Tables\Grouping\Group::make('date')
-                    ->collapsible(),
+                    ->collapsible()
+                    ->getTitleFromRecordUsing(fn (Schedule $record) => $record->date->format('M d, Y')),
             ])
             ->defaultGroup('date')
             ->columns([
                 Tables\Columns\TextColumn::make('date')
-                    ->date()
+                    ->date('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('owner.name')
