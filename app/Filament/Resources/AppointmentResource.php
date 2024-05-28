@@ -11,6 +11,7 @@ use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -39,7 +40,8 @@ class AppointmentResource extends Resource
                         ->native(false)
                         ->live()
                         ->required()
-                        ->closeOnDateSelection(),
+                        ->closeOnDateSelection()
+                        ->afterStateUpdated(fn (Set $set) => $set('doctor', null)),
                     Forms\Components\Select::make('doctor')
                         ->options(function (Get $get) use ($doctorRole) {
                             return User::whereBelongsTo($doctorRole)
@@ -50,10 +52,23 @@ class AppointmentResource extends Resource
                                 ->pluck('name', 'id');
                         })
                         ->native(false)
-                        ->hidden(fn (Get $get) => blank($get('date'))),
+                        ->hidden(fn (Get $get) => blank($get('date')))
+                        ->live()
+                        ->afterStateUpdated(fn (Set $set) => $set('slot_id', null)),
                     Forms\Components\Select::make('slot_id')
                         ->native(false)
-                        ->relationship(name: 'slot', titleAttribute: 'start')
+                        ->relationship(
+                            name: 'slot',
+                            titleAttribute: 'start',
+                            modifyQueryUsing: function (Builder $query, Get $get) {
+                                $doctor = User::find($get('doctor'));
+                                $query->whereHas('schedule', function (Builder $query) use ($doctor) {
+                                    $query->whereBelongsTo($doctor, 'owner');
+                                });
+
+                            }
+                        )
+                        ->hidden(fn (Get $get) => blank($get('doctor')))
                         ->getOptionLabelFromRecordUsing(fn (Slot $record) => $record->start->format('h:i A')),
                     Forms\Components\TextInput::make('description')
                         ->required()
@@ -75,14 +90,17 @@ class AppointmentResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->date()
+                Tables\Columns\TextColumn::make('slot.schedule.owner.name')
+                    ->label('Doctor')
+                    ->searchable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('slot.schedule.date')
+                    ->label('Date')
+                    ->date('M d, Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start')
-                    ->label('From')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('end')
-                    ->label('To')
+                Tables\Columns\TextColumn::make('slot.formatted_time')
+                    ->label('Time')
+                    ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
